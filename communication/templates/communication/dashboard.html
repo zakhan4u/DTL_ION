@@ -1,0 +1,129 @@
+{% extends 'communication/base.html' %}
+
+{% block content %}
+<h2>Welcome, {{ user.username }} ({{ user.userprofile.section }})</h2>
+
+<h3>Sent Notes</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>To</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Comments</th>
+            <th>Forward History</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for note in sent_notes %}
+        <tr>
+            <td><a href="{% url 'view_note' note.unique_id %}">{{ note.unique_id }}</a></td>
+            <td>{{ note.to_section }}</td>
+            <td>{{ note.subject }}</td>
+            <td>{{ note.status }}</td>
+            <td>{{ note.receiver_comments|default:"No comments" }}</td>
+            <td>
+                {% for history in note.forward_history.all %}
+                    {{ history.from_section }} → {{ history.to_section }} ({{ history.forwarded_at|date:"Y-m-d H:i" }})<br>
+                {% empty %}
+                    Not forwarded
+                {% endfor %}
+            </td>
+            <td>{{ note.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">No sent notes.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Received Notes</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>From</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Comments</th>
+            <th>Forward History</th>
+            <th>Actions</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for note in received_notes %}
+        <tr>
+            <td><a href="{% url 'view_note' note.unique_id %}">{{ note.unique_id }}</a></td>
+            <td>{{ note.from_user.username }} ({{ note.from_user.userprofile.section }})</td>
+            <td>{{ note.subject }}</td>
+            <td>{{ note.status }}</td>
+            <td>{{ note.receiver_comments|default:"No comments" }}</td>
+            <td>
+                {% for history in note.forward_history.all %}
+                    {{ history.from_section }} → {{ history.to_section }} ({{ history.forwarded_at|date:"Y-m-d H:i" }})<br>
+                {% empty %}
+                    Not forwarded
+                {% endfor %}
+            </td>
+            <td>
+                {% if user.userprofile.section == note.to_section or user.is_superuser %}
+                <a href="{% url 'update_status' note.unique_id %}" class="btn btn-sm btn-primary">Update Status</a>
+                <a href="{% url 'forward_note' note.unique_id %}" class="btn btn-sm btn-secondary">Forward</a>
+                {% endif %}
+            </td>
+            <td>{{ note.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">No received notes.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if user.is_superuser %}
+<h3>All Notes (Superuser)</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Comments</th>
+            <th>Forward History</th>
+            <th>Actions</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for note in all_notes %}
+        <tr>
+            <td><a href="{% url 'view_note' note.unique_id %}">{{ note.unique_id }}</a></td>
+            <td>{{ note.from_user.username }} ({{ note.from_user.userprofile.section }})</td>
+            <td>{{ note.to_section }}</td>
+            <td>{{ note.subject }}</td>
+            <td>{{ note.status }}</td>
+            <td>{{ note.receiver_comments|default:"No comments" }}</td>
+            <td>
+                {% for history in note.forward_history.all %}
+                    {{ history.from_section }} → {{ history.to_section }} ({{ history.forwarded_at|date:"Y-m-d H:i" }})<br>
+                {% empty %}
+                    Not forwarded
+                {% endfor %}
+            </td>
+            <td>
+                <a href="{% url 'update_status' note.unique_id %}" class="btn btn-sm btn-primary">Update Status</a>
+                <a href="{% url 'forward_note' note.unique_id %}" class="btn btn-sm btn-secondary">Forward</a>
+            </td>
+            <td>{{ note.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9">No notes.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

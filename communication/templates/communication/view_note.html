@@ -1,0 +1,28 @@
+{% extends 'communication/base.html' %}
+
+{% block content %}
+<h2>Note: {{ note.unique_id }}</h2>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ note.subject }}</h5>
+        <p><strong>From:</strong> {{ note.from_user.username }} ({{ note.from_user.userprofile.section }})</p>
+        <p><strong>To:</strong> {{ note.to_section }}</p>
+        <p><strong>Status:</strong> {{ note.status }}</p>
+        <p><strong>Description:</strong> {{ note.description }}</p>
+        <p><strong>Receiver Comments:</strong> {{ note.receiver_comments|default:"No comments" }}</p>
+        <p><strong>Forward History:</strong></p>
+        <ul>
+            {% for history in note.forward_history.all %}
+                <li>{{ history.from_section }} → {{ history.to_section }} by {{ history.forwarded_by.username }} ({{ history.forwarded_at|date:"Y-m-d H:i" }})</li>
+            {% empty %}
+                <li>Not forwarded</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+{% if user.userprofile.section == note.to_section or user.is_superuser %}
+<a href="{% url 'update_status' note.unique_id %}" class="btn btn-primary">Update Status</a>
+<a href="{% url 'forward_note' note.unique_id %}" class="btn btn-secondary">Forward</a>
+{% endif %}
+{% endblock %}

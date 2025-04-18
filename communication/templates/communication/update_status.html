@@ -1,0 +1,23 @@
+{% extends 'communication/base.html' %}
+
+{% block content %}
+<h2>Update Status for Note: {{ note.unique_id }}</h2>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ note.subject }}</h5>
+        <p><strong>From:</strong> {{ note.from_user.username }} ({{ note.from_user.userprofile.section }})</p>
+        <p><strong>To:</strong> {{ note.to_section }}</p>
+        <p><strong>Description:</strong> {{ note.description }}</p>
+        <p><strong>Current Status:</strong> {{ note.status }}</p>
+    </div>
+</div>
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Status:</label>
+        {{ form.status }}
+    </div>
+    <button type="submit" class="btn btn-primary">Update Status</button>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'communication/base.html' %}
+
+{% block content %}
+<h2>Forward Note: {{ note.unique_id }}</h2>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ note.subject }}</h5>
+        <p><strong>From:</strong> {{ note.from_user.username }} ({{ note.from_user.userprofile.section }})</p>
+        <p><strong>Current Section:</strong> {{ note.to_section }}</p>
+        <p><strong>Description:</strong> {{ note.description }}</p>
+        <p><strong>Receiver Comments:</strong> {{ note.receiver_comments|default:"No comments" }}</p>
+        <p><strong>Forward History:</strong></p>
+        <ul>
+            {% for history in note.forward_history.all %}
+                <li>{{ history.from_section }} → {{ history.to_section }} by {{ history.forwarded_by.username }} ({{ history.forwarded_at|date:"Y-m-d H:i" }})</li>
+            {% empty %}
+                <li>Not forwarded</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Forward to Section:</label>
+        {{ form.to_section }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Forwarding Comments:</label>
+        {{ form.comments }}
+    </div>
+    <button type="submit" class="btn btn-primary">Forward Note</button>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
