@@ -22,6 +22,15 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'create_note' %}">Create Note</a>
                         </li>
+                        {% if user.userprofile.section == 'STANDARD' or user.is_superuser %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'inventory_list' %}">Inventory</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'stores_request' %}">Stores</a>
+                        </li>
+                    {% endif %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'password_change' %}">Change Password</a>
                         </li>

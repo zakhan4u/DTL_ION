@@ -17,4 +17,10 @@ urlpatterns = [
         template_name='communication/password_change_done.html'
     ), name='password_change_done'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
+    path('inventory/', views.inventory_list, name='inventory_list'),
+    path('inventory/add/', views.inventory_add, name='inventory_add'),
+    path('inventory/edit/<int:item_id>/', views.inventory_edit, name='inventory_edit'),
+    path('inventory/delete/<int:item_id>/', views.inventory_delete, name='inventory_delete'),
+    path('stores/', views.stores_request, name='stores_request'),
+    path('request/approve/<int:request_id>/', views.request_approve, name='request_approve'),
 ]

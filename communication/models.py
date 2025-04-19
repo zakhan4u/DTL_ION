@@ -105,3 +105,50 @@ class NoteForwardHistory(models.Model):
 
     def __str__(self):
         return f"{self.note.unique_id}: {self.from_section} → {self.to_section}"
+    
+
+class InventoryItem(models.Model):
+    name = models.CharField(max_length=100)
+    manufacturer = models.CharField(max_length=100, blank=True)
+    purity = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
+    quantity = models.PositiveIntegerField(default=0)
+    category = models.CharField(max_length=50, choices=[
+        ('EQUIPMENT', 'Equipment'),
+        ('SUPPLIES', 'Supplies'),
+        ('CHEMICALS', 'Chemicals'),
+        ('GLASSWARE', 'Glassware'),
+        ('STANDARDS', 'Standards'),
+        ('OTHER', 'Other'),
+    ])
+    location = models.CharField(max_length=100, blank=True)
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='inventory_items')
+    added_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity} in {self.location})"
+    
+
+class ItemRequest(models.Model):
+    item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE, related_name='requests')
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='item_requests')
+    quantity = models.PositiveIntegerField()
+    requested_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=[
+        ('PENDING', 'Pending'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+    ], default='PENDING')
+
+    def save(self, *args, **kwargs):
+        if self.status == 'APPROVED' and self.pk is None:  # New approved request
+            if self.item.quantity >= self.quantity:
+                self.item.quantity -= self.quantity
+                self.item.save()
+            else:
+                raise ValueError("Insufficient quantity in inventory.")
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Request for {self.quantity} {self.item.name} by {self.requested_by.username}"

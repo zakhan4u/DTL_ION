@@ -1,0 +1,72 @@
+{% extends 'communication/base.html' %}
+
+{% block content %}
+<h2>Request Items from Stores</h2>
+<div class="card">
+    <div class="card-body">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="{{ form.item.id_for_label }}" class="form-label">Item:</label>
+                {{ form.item }}
+                {% if form.item.errors %}
+                    <div class="text-danger">{{ form.item.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.quantity.id_for_label }}" class="form-label">Quantity:</label>
+                {{ form.quantity }}
+                {% if form.quantity.errors %}
+                    <div class="text-danger">{{ form.quantity.errors }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Request Item</button>
+        </form>
+        <form method="get" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Search items..." value="{{ query }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+        {% if items %}
+            <ul class="list-group mb-3">
+                {% for item in items %}
+                    <li class="list-group-item">{{ item.name }} ({{ item.quantity }} in stock)</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <h3 class="mt-4">Your Requests</h3>
+        {% if requests %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Requested At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests %}
+                        <tr>
+                            <td>{{ request.item.name }}</td>
+                            <td>{{ request.quantity }}</td>
+                            <td>{{ request.get_status_display }}</td>
+                            <td>{{ request.requested_at }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No requests made yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

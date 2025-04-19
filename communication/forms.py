@@ -1,5 +1,5 @@
 from django import forms
-from .models import Note, SECTION_CHOICES, STATUS_CHOICES
+from .models import Note, SECTION_CHOICES, STATUS_CHOICES,InventoryItem,ItemRequest
 
 class NoteForm(forms.ModelForm):
     class Meta:
@@ -36,3 +36,19 @@ class ForwardNoteForm(forms.Form):
         required=False,
         label='Forwarding Comments'
     )
+class InventoryItemForm(forms.ModelForm):
+    class Meta:
+        model = InventoryItem
+        fields = ['name', 'description', 'quantity', 'category', 'location']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'category': forms.Select(),
+        }
+
+class ItemRequestForm(forms.ModelForm):
+    class Meta:
+        model = ItemRequest
+        fields = ['item', 'quantity']
+        widgets = {
+            'item': forms.Select(),
+        }

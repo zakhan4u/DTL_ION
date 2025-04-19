@@ -1,0 +1,15 @@
+{% extends 'communication/base.html' %}
+{% block content %}
+<h2>Approve Request for {{ request.item.name }}</h2>
+<div class="card">
+    <div class="card-body">
+        <p>Request by {{ request.requested_by.username }} for {{ request.quantity }} items.</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
+            <button type="submit" name="action" value="reject" class="btn btn-danger">Reject</button>
+            <a href="{% url 'inventory_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Note, UserProfile, NoteForwardHistory
-from .forms import NoteForm, StatusUpdateForm, ForwardNoteForm
+from .models import Note, UserProfile, NoteForwardHistory,InventoryItem,ItemRequest
+from .forms import NoteForm, StatusUpdateForm, ForwardNoteForm,InventoryItemForm, ItemRequestForm
 from django.contrib import messages
+
+
 
 @login_required
 def dashboard(request):
@@ -25,6 +27,80 @@ def dashboard(request):
         'all_notes': all_notes,
     })
 
+@login_required
+def inventory_list(request):
+    items = InventoryItem.objects.all() if request.user.is_superuser else InventoryItem.objects.filter(added_by=request.user)
+    return render(request, 'communication/inventory_list.html', {'items': items})
+
+@login_required
+def inventory_add(request):
+    if request.user.userprofile.section != 'STANDARD' and not request.user.is_superuser:
+        messages.error(request, "Only users in the Standard section can add inventory items.")
+        return redirect('inventory_list')
+    if request.method == 'POST':
+        form = InventoryItemForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.added_by = request.user
+            item.save()
+            messages.success(request, f"Added {item.name} to inventory.")
+            return redirect('inventory_list')
+    else:
+        form = InventoryItemForm()
+    return render(request, 'communication/inventory_form.html', {'form': form, 'title': 'Add Inventory Item'})
+
+@login_required
+def inventory_edit(request, item_id):
+    item = get_object_or_404(InventoryItem, id=item_id)
+    if not request.user.is_superuser and item.added_by != request.user:
+        messages.error(request, "You are not authorized to edit this item.")
+        return redirect('inventory_list')
+    if request.method == 'POST':
+        form = InventoryItemForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Updated {item.name} in inventory.")
+            return redirect('inventory_list')
+    else:
+        form = InventoryItemForm(instance=item)
+    return render(request, 'communication/inventory_form.html', {'form': form, 'title': 'Edit Inventory Item'})
+
+@login_required
+def inventory_delete(request, item_id):
+    item = get_object_or_404(InventoryItem, id=item_id)
+    if request.user.userprofile.section != 'STANDARD' and not request.user.is_superuser:
+        messages.error(request, "Only users in the Standard section can delete inventory items.")
+        return redirect('inventory_list')
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, f"Deleted {item.name} from inventory.")
+        return redirect('inventory_list')
+    return render(request, 'communication/inventory_confirm_delete.html', {'item': item})
+
+@login_required
+def stores_request(request):
+    if request.user.userprofile.section == 'STANDARD' and not request.user.is_superuser:
+        messages.error(request, "Standard section users manage inventory directly.")
+        return redirect('inventory_list')
+    query = request.GET.get('q')
+    items = InventoryItem.objects.all()
+    if query:
+        items = items.filter(name__icontains=query) | items.filter(description__icontains=query)
+    form = ItemRequestForm(initial={'item': items.first() if items.exists() else None})
+    if request.method == 'POST':
+        form = ItemRequestForm(request.POST)
+        if form.is_valid():
+            request_item = form.save(commit=False)
+            request_item.requested_by = request.user
+            request_item.status = 'APPROVED'
+            try:
+                request_item.save()
+                messages.success(request, f"Requested {request_item.quantity} {request_item.item.name}.")
+            except ValueError as e:
+                messages.error(request, str(e))
+            return redirect('stores_request')
+    requests = ItemRequest.objects.filter(requested_by=request.user)
+    return render(request, 'communication/stores_request.html', {'form': form, 'requests': requests, 'items': items, 'query': query})
 @login_required
 def create_note(request):
     try:
@@ -110,3 +186,20 @@ def forward_note(request, note_id):
         form = ForwardNoteForm()
     
     return render(request, 'communication/forward_note.html', {'form': form, 'note': note})
+
+@login_required
+def request_approve(request, request_id):
+    if request.user.userprofile.section != 'STANDARD' and not request.user.is_superuser:
+        messages.error(request, "Only Standard section users can approve requests.")
+        return redirect('inventory_list')
+    item_request = get_object_or_404(ItemRequest, id=request_id)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        item_request.status = 'APPROVED' if action == 'approve' else 'REJECTED'
+        try:
+            item_request.save()
+            messages.success(request, f"Request {item_request} {'approved' if action == 'approve' else 'rejected'}.")
+        except ValueError as e:
+            messages.error(request, str(e))
+        return redirect('inventory_list')
+    return render(request, 'communication/request_approve.html', {'request': item_request})

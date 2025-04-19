@@ -1,0 +1,77 @@
+{% extends 'communication/base.html' %}
+
+{% block content %}
+<h2>Inventory Management</h2>
+<div class="card">
+    <div class="card-body">
+        {% if user.userprofile.section == 'STANDARD' or user.is_superuser %}
+            <a href="{% url 'inventory_add' %}" class="btn btn-primary mb-3">Add New Item</a>
+        {% endif %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% if items %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Added By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.get_category_display }}</td>
+                            <td>{{ item.location }}</td>
+                            <td>{{ item.added_by.username }}</td>
+                            <td>
+                                <a href="{% url 'inventory_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
+                                {% if user.userprofile.section == 'STANDARD' or user.is_superuser %}
+                                    <a href="{% url 'inventory_delete' item.id %}" class="btn btn-sm btn-danger">Delete</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No inventory items found.</p>
+        {% endif %}
+        {% if pending_requests %}
+    <h3 class="mt-4">Pending Requests</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Requested By</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in pending_requests %}
+                <tr>
+                    <td>{{ req.item.name }}</td>
+                    <td>{{ req.quantity }}</td>
+                    <td>{{ req.requested_by.username }}</td>
+                    <td>
+                        <a href="{% url 'request_approve' req.id %}" class="btn btn-sm btn-primary">Review</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+    </div>
+</div>
+{% endblock %}
